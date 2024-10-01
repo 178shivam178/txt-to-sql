@@ -1,30 +1,71 @@
-# SQL Query Generation and Execution using OpenAI, and LLAMA
+# Project Overview: Converting Business Questions into SQL Queries with Fine-Tuned Llama Models
 
-This project allows you to convert user queries into SQL queries using OpenAI's API and execute them on your database. It considers your database schema to generate accurate and relevant SQL queries.
+The core goal of this project is to translate business-related natural language questions into SQL queries, execute them on a company's database, and present the results in a user-friendly UI. This solution allows non-technical users to interact with a database using natural language, automating the process of generating SQL queries aligned with specific business domains.
 
-## Features
+## Example Questions
+- "What is the best-selling product in each state?"
+- "What is the net revenue in the last year?"
 
-- Convert natural language queries into SQL.
-- Execute generated SQL queries on your database.
-- Customize the database schema to improve query accuracy.
+By using this system, users can ask questions in plain language, and the underlying model will generate and execute the SQL query on their database, returning accurate results.
 
-## Prerequisites
+---
 
-- Conda
-- A database (MySQL, PostgreSQL, etc.)
+## Approach
 
-## Setup
+### Initial Attempt with GPT Models
+#### Challenges:
+1. **Cost of Lengthy Prompts**:  
+   Using GPT required a comprehensive prompt that included detailed database schema descriptions (e.g., column names, data types, relationships). This made the prompt around 1800 words long, which significantly increased the cost of each API call, leading to inefficiencies.
+   
+2. **Domain-Specific Query Generation**:  
+   GPT models, being general-purpose, often generated incorrect or irrelevant SQL queries. Their lack of deep understanding of specialized business databases resulted in random and imprecise queries, making them unreliable for this specific application.
 
-Follow these steps to set up the project on your local machine:
+---
 
-### 1. Create a Conda Environment
+### Fine-Tuning Llama for Domain Adaptability
+To overcome the challenges faced with GPT, the project shifted to fine-tuning the Llama models, which proved to be more cost-effective and adaptable for domain-specific tasks.
 
-```bash
-conda create -n sql python=3.8 -y
-```
-activate env
+#### Key Constraint: Data Availability
+One major challenge in fine-tuning language models is the availability of domain-specific data. To address this, we developed a **data generation pipeline**.
 
-```bash
-conda activate sql
-```
+#### Data Generation Pipeline:
+1. Domain experts created business-related questions and corresponding SQL queries.
+2. GPT was used to generate additional question-query pairs, focusing on business contexts.
+3. Each generated query was executed on the actual database to ensure correctness. If the query returned valid results, the question-query pair was added to the training dataset; otherwise, it was discarded.
+4. **GEMINI**, another data generation tool, was also used to produce question-query pairs following the same validation process.
 
+#### Generated Dataset:
+- The pipeline resulted in a dataset of approximately **2,500 high-quality question-query pairs**.
+- Queries that failed to execute or return valid results were excluded from the final dataset.
+
+---
+
+### Fine-Tuning Process
+Several versions of the Llama model were fine-tuned using the generated dataset:
+- **Llama 3-8B**
+- **Llama 3.2-1B**
+- **Llama 3.2-3B**
+
+After fine-tuning, the models exhibited high domain adaptability and produced SQL queries with an accuracy of over **90%** when tested on this specific dataset.
+
+---
+
+## Why Not GPT?
+
+Despite using GPT for initial data generation, it was not used for the final task due to several reasons:
+
+1. **Cost**:  
+   GPT's cost, especially for lengthy prompts with detailed database schema descriptions (around 1800 words), was prohibitive. Each API call was expensive, making it unsuitable for continuous use in this project.
+
+2. **Execution-Based Validation**:  
+   GPT-generated queries were validated by executing them on the database. While it was useful for data generation, GPT's inability to consistently generate correct SQL queries without long prompts made it less reliable for direct usage in query generation.
+
+3. **Domain-Specific Accuracy**:  
+   Fine-tuning Llama for domain-specific tasks proved to be more accurate and cost-effective, producing reliable SQL queries aligned with the company's business logic.
+
+---
+
+## Conclusion
+The fine-tuned Llama model provides a highly accurate, cost-effective solution for converting natural language business questions into SQL queries, particularly for domain-specific databases. By utilizing a data generation pipeline, we created a robust dataset for training, and the resulting fine-tuned Llama models achieved over **90% accuracy** in generating valid SQL queries.
+
+This approach resolves the limitations faced with GPT, such as high costs and inaccurate query generation, while leveraging GPT and GEMINI for data creation. Fine-tuning Llama offers an optimal solution for reliable and efficient SQL query generation based on natural language inputs.

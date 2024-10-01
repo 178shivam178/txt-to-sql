@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL Query Generator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        /* Set light gray background for the entire page */
+        body {
+            background-color: #F9F6EE; /* Light gray color */
+        }
+
+        /* Result table background */
+        #resultTable {
+            background-color: #FFFFFF; /* White background for result section */
+            padding: 20px; /* Add some padding for better appearance */
+            border-radius: 5px; /* Rounded corners */
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Add subtle shadow */
+        }
+
+        /* Center the spinner */
+        .spinner-border {
+            display: none;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        #resultTable {
+            display: none;
+        }
+        #errorMessage {
+            display: none;
+        }
+        pre {
+            background-color: #f8f9fa; /* Light background for code block */
+            padding: 10px;
+            border: 1px solid #ced4da; /* Border to separate code block */
+            border-radius: 5px; /* Rounded corners */
+            overflow-x: auto; /* Scrollable on overflow */
+        }
+        /* Make table scrollable */
+        .table-responsive {
+            max-height: 300px; /* Set a maximum height */
+            overflow-y: auto; /* Enable vertical scrolling */
+        }
+
+        /* Style the paragraph to align with the question input */
+        #modelParagraph {
+            font-size: 14px;
+            color: #6c757d;
+            margin-top: 10px;
+            text-align: left; /* Align with the question box */
+        }
+
+        /* Make GitHub link smaller */
+        #gitLink {
+            font-size: 12px;
+            color: #007bff;
+            text-decoration: none;
+        }
+        #gitLink:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center">SQL Query Generator</h1>
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <!-- Question Input Form -->
+                <p id="modelParagraph">We have fine-tuned the Llama model and deployed it on the server. After that, we call the APIs from this project to generate queries and execute them on the database. <a id="gitLink" href="https://github.com/178shivam178/txt-to-sql" target="_blank">GitHub Repository</a></p>
+
+                <form id="queryForm">
+                    <div class="mb-3">
+                        <label for="question" class="form-label">Enter your question</label>
+                        <input type="text" class="form-control" id="question" placeholder="Type your question here" required>
+                    </div>
+
+                    <!-- Added paragraph and GitHub link -->
+                    
+                    <button type="submit" class="btn btn-primary">Generate Query</button>
+                </form>
+
+                <!-- Spinner (Processing) -->
+                <div class="text-center mt-3">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Processing...</span>
+                    </div>
+                </div>
+
+                <!-- Result Section -->
+                <div id="resultTable" class="mt-4">
+                    <!-- Heading for Results -->
+                    <p><strong>Question:</strong> <span id="displayQuestion"></span></p>
+                    <p><strong>Generated Query:</strong></p>
+                    <pre id="displayQuery"></pre> <!-- Code format for generated query -->
+                    <p id="tableResponseHeading" style="display: none;"><strong>Execution Result:</strong></p>
+
+                    <!-- Table for displaying the result -->
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="queryResultTable">
+                            <thead id="tableHeader">
+                                <!-- Dynamically generated headers will go here -->
+                            </thead>
+                            <tbody id="tableBody">
+                                <!-- Dynamically generated rows will go here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Error Message Section -->
+                <div id="errorMessage" class="alert alert-danger mt-3" role="alert">
+                    Failed to generate the query. Please try again.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            $('#queryForm').on('submit', function (event) {
+                event.preventDefault();
+
+                // Hide the previous results or error message
+                $('#resultTable').hide();
+                $('#resultsHeading').hide(); // Hide the results heading
+                $('#tableResponseHeading').hide(); // Hide the table response heading
+                $('#errorMessage').hide();
+
+                // Show the spinner
+                $('.spinner-border').show();
+
+                var question = $('#question').val();
+                if (question) {
+                    $.ajax({
+                        url: "/generate_query",
+                        method: "POST",
+                        contentType: "application/json",
+                        data: JSON.stringify({ question: question }),
+                        success: function (response) {
+                            // Hide the spinner
+                            $('.spinner-border').hide();
+
+                            // Show the result and handle different types of responses
+                            $('#displayQuestion').text(response.question || "N/A");
+                            $('#displayQuery').text(response.generated_query || "Query not available").css('white-space', 'pre'); // Preserve whitespace for code format
+                            $('#displayStatus').text(response.status || "Unknown");
+
+                            // Clear any previous table data
+                            $('#tableHeader').empty();
+                            $('#tableBody').empty();
+
+                            // Check if response contains data for the table
+                            if (response.response && Array.isArray(response.response) && response.response.length > 0) {
+                                // Get the column names from the first row (object keys)
+                                var columns = Object.keys(response.response[0]);
+
+                                // Generate the table headers
+                                var headerRow = $('<tr></tr>');
+                                columns.forEach(function (column) {
+                                    headerRow.append('<th>' + column + '</th>');
+                                });
+                                $('#tableHeader').append(headerRow);
+
+                                // Generate the table rows
+                                response.response.forEach(function (row) {
+                                    var tableRow = $('<tr></tr>');
+                                    columns.forEach(function (column) {
+                                        tableRow.append('<td>' + (row[column] || '') + '</td>');
+                                    });
+                                    $('#tableBody').append(tableRow);
+                                });
+
+                                // Show the results heading and table
+                                $('#resultsHeading').show();
+                                $('#tableResponseHeading').show(); // Show the table response heading
+                                $('#resultTable').show();
+                            } else {
+                                // If no data is returned, show a message
+                                $('#tableBody').append('<tr><td colspan="100%">No results found</td></tr>');
+                                $('#resultsHeading').show(); // Show heading even if no results
+                                $('#tableResponseHeading').show(); // Show table heading
+                                $('#resultTable').show();
+                            }
+                        },
+                        error: function (jqXHR) {
+                            // Hide the spinner
+                            $('.spinner-border').hide();
+
+                            // Show the error message with details
+                            var errorMsg = jqXHR.responseJSON ? jqXHR.responseJSON.error : "Failed to generate the query. Please try again.";
+                            $('#errorMessage').text(errorMsg).show();
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
