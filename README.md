@@ -64,6 +64,8 @@ Despite using GPT for initial data generation, it was not used for the final tas
    Fine-tuning Llama for domain-specific tasks proved to be more accurate and cost-effective, producing reliable SQL queries aligned with the company's business logic.
 
 ---
+![Project Image](ttosql.png)
+---
 
 ## Environment Setup
 
