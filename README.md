@@ -65,6 +65,40 @@ Despite using GPT for initial data generation, it was not used for the final tas
 
 ---
 
+## Environment Setup
+
+To create and activate the environment, follow these steps:
+
+### 1. Create Conda Environment
+
+create env 
+
+```bash
+conda create -n ttosql python=3.10 -y
+```
+
+### 2. Activate Environment
+
+```bash
+conda activate ttosql
+```
+
+### 3. install the requirements
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. SET your database and llama URL
+Change .env
+
+### 6. Run api.py 
+
+```bash
+http://127.0.0.1/3008
+```
+----
+
 ## Conclusion
 The fine-tuned Llama model provides a highly accurate, cost-effective solution for converting natural language business questions into SQL queries, particularly for domain-specific databases. By utilizing a data generation pipeline, we created a robust dataset for training, and the resulting fine-tuned Llama models achieved over **90% accuracy** in generating valid SQL queries.
 
