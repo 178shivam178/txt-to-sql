@@ -45,6 +45,9 @@ Several versions of the Llama model were fine-tuned using the generated dataset:
 - **Llama 3-8B**
 - **Llama 3.2-1B**
 - **Llama 3.2-3B**
+- (LLAMA 3-8B): Trained with a quantized model using LoRA configurations (lora_alpha=256, lora_dropout=0.1, r=32) on dual T4 GPUs, achieving 94% query success.
+- (LLAMA 3.2 1B): Fine-tuned an unquantized model with similar LoRA settings on a P100 GPU, reaching 82.5% query success.
+- (LLAMA 3.2 3B): Fine-tuned an unquantized model with similar LoRA settings on a P100 GPU, reaching 90.5% query success.
 
 After fine-tuning, the models exhibited high domain adaptability and produced SQL queries with an accuracy of over **90%** when tested on this specific dataset.
 
